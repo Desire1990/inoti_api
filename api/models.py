@@ -20,12 +20,6 @@ class Client(models.Model):
 	def __str__(self):
 		return f"{self.nom} {self.tel}"
 
-class Account(models.Model):
-	id = models.SmallAutoField(primary_key=True)
-	user = models.OneToOneField(User, on_delete = models.CASCADE )
-	montant = models.FloatField(default=0)
-
-
 
 class AccountCanada(models.Model):
 	id = models.SmallAutoField(primary_key=True)
@@ -43,7 +37,7 @@ class AccountBurundi(models.Model):
 	transfer = models.FloatField(default=0)
 
 	def __str__(self):
-		return f"self.user.usename"
+		return f"{self.user.usename}"
 
 class Payment(models.Model):
 	id = models.SmallAutoField(primary_key = True)
@@ -54,6 +48,13 @@ class Payment(models.Model):
 
 class Provisioning(models.Model):
 	id = models.SmallAutoField(primary_key=True)
+	user = models.OneToOneField(User, on_delete = models.CASCADE)
+	account  = models.ForeignKey(AccountBurundi, on_delete = models.PROTECT)
+	montant = models.FloatField(default=0)
+	montant_recu = models.FloatField(default=0)
+
+	def __str__(self):
+		return f"{self.user.username} {self.montant}"
 
 
 class Depense(models.Model):
@@ -64,5 +65,5 @@ class Depense(models.Model):
 	is_valid = models.BooleanField(default = False)
 
 	def __str__(self):
-		return f"{self.user.username}"
+		return f"{self.user.username} {seelf.montant}"
     
