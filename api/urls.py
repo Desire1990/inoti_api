@@ -1,9 +1,7 @@
 from django.urls import path, include, re_path
 from rest_framework import routers
 from .views import *
-
 from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
-
 from dj_rest_auth.registration.views import RegisterView, VerifyEmailView, ConfirmEmailView
 from dj_rest_auth.views import LoginView, LogoutView
 
@@ -22,7 +20,6 @@ app_name='api'
 
 urlpatterns = [
 	path('', include(router.urls)),
-	path('api-auth/', include('rest_framework.urls')),
 	path('login/', TokenPairView.as_view()),
 	path('refresh/', TokenRefreshView.as_view()),
     path('account-confirm-email/<str:key>/', ConfirmEmailView.as_view()),

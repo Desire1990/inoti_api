@@ -88,36 +88,16 @@ class ClientSerializer(serializers.ModelSerializer):
 		fields = "__all__"
 
 
-# class AccountSerializer(serializers.ModelSerializer):
-# 	total_canada = serializers.SerializerMethodField()
-# 	total_burundi = serializers.SerializerMethodField()
-
-
-# 	def get_total_canada(self, obj):
-# 		return obj.get_total_canada
-
-# 	def get_total_burundi(self, obj):
-# 		return obj.get_total_burundi
-
-# 	class Meta:
-# 		model = Account
-# 		fields = ('montant_canada', 'montant_burundi', 'taux', 'total_canada', 'total_burundi')
-
-
-
-
 class AccountSerializer(serializers.ModelSerializer):
 	total_canada = serializers.SerializerMethodField()
 	total_burundi = serializers.SerializerMethodField()
 
 	def get_total_canada(self, obj):
 		totaux= Account.objects.all().aggregate(total=Sum('montant_canada'))
-		# print(versements["total"])
 		return totaux["total"]
 
 	def get_total_burundi(self, obj):
 		totaux = Account.objects.all().aggregate(totale=Sum('montant_burundi'))
-		# print(versements["total"])
 		return totaux["totale"]
 
 	 
@@ -127,7 +107,6 @@ class AccountSerializer(serializers.ModelSerializer):
 
 class DepotSerializer(serializers.ModelSerializer):
 	# client = ClientSerializer(required=True)
-	class Meta:
 		model = Depot
 		fields = "__all__"
 

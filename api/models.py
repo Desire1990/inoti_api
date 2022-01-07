@@ -23,13 +23,22 @@ class Client(models.Model):
 
 class Account(models.Model):
 	id = models.SmallAutoField(primary_key=True)
+	user = models.OneToOneField(User, on_delete=models.CASCADE)
 	montant_canada = models.FloatField(default = 0)
 	montant_burundi = models.FloatField(default = 0)
-	taux = models.FloatField(default=0)
-
-
+	date  = models.DateTimeField(default = timezone.now, editable = False)
 	def __str__(self):
-		return f"self.user.usename"
+		return f"{self.montant_canada}"
+
+	# class Meta:
+	# 	constraints = [
+	# 		models.CheckConstraint(check=models.Q(montant_canada__gte='0'), name='d_montant_canada_cannot_be_negative'),
+	# 	]
+
+	# class Meta:
+	# 	constraints = [
+	# 		models.CheckConstraint(check=models.Q(montant_burundi__gte='0'), name='d_montant_burundi_cannot_be_negative'),
+	# 	]
 
 
 	def get_total_canada(self):
@@ -46,44 +55,71 @@ class Depot(models.Model):
 	nom = models.CharField(max_length=64, null=True)
 	receiver=models.ForeignKey(Account, on_delete = models.CASCADE)
 	amount = models.FloatField(default = 0)
+	gain = models.FloatField(default = 0, editable=False)
 	date  = models.DateTimeField(default = timezone.now, editable = False)
+	taux = models.FloatField(default=0.05, editable=False)
 
 	def __str__(self):
-		return f"{self.sender}"
+		return f"{self.nom}"
 
 	def save(self, *args, **kwargs):
 		super().save(*args, **kwargs)
-		receiver = self.amount
-		receiver.montant_canada += (self.amount - (self.amount*self.receiver.taux))
-		receiver.save()
+		receive = self.receiver
+		receive.montant_canada += (self.amount)
+		self.gain += self.amount*self.taux
+		receive.save()
+
+	# class Meta:
+	# 	constraints = [
+	# 		models.CheckConstraint(check=models.Q(amount__gte='0'), name='d_amount_cannot_be_negative'),
+	# 	]
 
 
 class Transaction(models.Model):
 	id = models.SmallAutoField(primary_key = True)
 	sent = models.ForeignKey(Account, on_delete = models.CASCADE)
-	receiver = models.ForeignKey(Client, on_delete = models.CASCADE)
+	receiver = models.CharField(max_length= 100)
 	amount = models.FloatField(default = 0)
 	date = models.DateTimeField(default = timezone.now, editable=False)
 
 	def __str__(self):
-		return f"{self.sender} {self.amount}"
+		return f"{self.amount}"
+
+	# class Meta:
+	# 	constraints = [
+	# 		models.CheckConstraint(check=models.Q(amount__gte='0'), name='d_amount_cannot_be_negative'),
+	# 	]
 
 	def save(self, *args, **kwargs):
 		super().save(*args, **kwargs)
-		sent = self.amount
-		sent.montant -= self.amount
-		sent.save()
+		money = self.sent
+		money.montant_burundi -= self.amount
+		money.save()
+
+
 
 class Depense(models.Model):
 	id = models.SmallAutoField(primary_key=True)
-	user = models.OneToOneField(User, on_delete=models.CASCADE)
+	user = models.ForeignKey(User, on_delete=models.CASCADE)
+	account = models.ForeignKey(Account, on_delete=models.CASCADE)
 	montant = models.FloatField(default = 0)
 	date = models.DateTimeField(default=timezone.now, editable = False)
 	is_valid = models.BooleanField(default = False)
 
 	def __str__(self):
-		return f"{self.user.username} {seelf.montant}"
+		return f"{self.user.username} {self.montant}"
+
+	def save(self, *args, **kwargs):
+		super().save(*args, **kwargs)
+		payee = self.account
+		payee.montant -= self.montant
+		payee.save()
+
 	
+	# class Meta:
+	# 	constraints = [
+	# 		models.CheckConstraint(check=models.Q(montant__gte='0'), name='d_montant_cannot_be_negative'),
+	# 	]
 
 
 class Payment(models.Model):
@@ -99,13 +135,17 @@ class Payment(models.Model):
 	def save(self, *args, **kwargs):
 		super().save(*args, **kwargs)
 		payee = self.account
-		payee.montant -= self.montant
+		payee.montant_burundi -= self.montant
 		payee.save()
+
+	# class Meta:
+	# 	constraints = [
+	# 		models.CheckConstraint(check=models.Q(amount__gte='0'), name='d_amount_cannot_be_negative'),
+	# 	]
 
 
 class Provisioning(models.Model):
 	id = models.SmallAutoField(primary_key=True)
-	user = models.OneToOneField(User, on_delete = models.CASCADE)
 	account  = models.ForeignKey(Account, on_delete = models.PROTECT)
 	montant = models.FloatField(default=0)
 	montant_recu = models.FloatField(default=0)
@@ -116,5 +156,11 @@ class Provisioning(models.Model):
 	def save(self, *args, **kwargs):
 		super().save(*args, **kwargs)
 		provision = self.account
-		provision.montant -= self.amount
+		provision.montant_canada -= self.montant
+		provision.montant_burundi += self.montant_recu
 		provision.save()
+
+	# class Meta:
+	# 	constraints = [
+	# 		models.CheckConstraint(check=models.Q(montant__gte='0'), name='d_montant_cannot_be_negative'),
+	# 	]
