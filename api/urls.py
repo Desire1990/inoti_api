@@ -10,6 +10,13 @@ from dj_rest_auth.views import LoginView, LogoutView
 
 router = routers.DefaultRouter()
 router.register("user",UserViewset)
+router.register("client",ClientVieset)
+router.register("compte",AccountVieset)
+router.register("depot",DepotVieset)
+router.register("transactions",TransactionVieset)
+router.register("depenses",DepenseVieset)
+router.register("pay",PaymentVieset)
+router.register("approvision",ProvisioningVieset)
 
 app_name='api'
 
