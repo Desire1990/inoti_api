@@ -7,7 +7,7 @@ from rest_framework import viewsets, generics, mixins
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
-
+from django.db import transaction
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -28,7 +28,7 @@ class UserViewset(viewsets.ModelViewSet):
 	serializer_class = UserSerializer
 	filter_backends = DjangoFilterBackend,
 	filter_fields = {
-		# "profile":["exact", "isnull"],
+
 		"username":["exact"]
 	}
 
@@ -68,58 +68,114 @@ class UserViewset(viewsets.ModelViewSet):
 		user.save()
 		return Response({'status': 'success'}, 204)
 
-class ClientVieset(viewsets.ModelViewSet):
-	authentication_classes = (SessionAuthentication, JWTAuthentication)
-	permission_classes = [IsAuthenticated, ]
-	queryset = Client.objects.all()
-	serializer_class = ClientSerializer
 
-class AccountVieset(viewsets.ModelViewSet):
+class AccountViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
 	queryset = Account.objects.all()
 	serializer_class = AccountSerializer
+	filter_backends = DjangoFilterBackend,
+	filter_fields = {
+		"date":["exact"]
+	}
 
-	# def get_queryset(self):
-	# 	return Account.objects.annotate(
-	# 		get_montant_canada=Sum('montant_canada'),
-	# 		get_montant_burundi=Sum('montant_burundi')
-	# 	)
-
-
-
-class ClientVieset(viewsets.ModelViewSet):
+class TransferViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
-	queryset = Client.objects.all()
-	serializer_class = ClientSerializer
+	queryset = Transfer.objects.all()
+	serializer_class = TransferSerializer
+	filter_backends = DjangoFilterBackend,
+	filter_fields = {
 
-class DepotVieset(viewsets.ModelViewSet):
-	authentication_classes = (SessionAuthentication, JWTAuthentication)
-	permission_classes = [IsAuthenticated, ]
-	queryset = Depot.objects.all()
-	serializer_class = DepotSerializer
+		"account":["exact"]
+	}
+	@transaction.atomic
+	def create(self, request):
+		data = request.data
+		compte = Account.objects.get(code='MAIN')
+		nom = data.get('nom')
+		tel = data.get('tel')
+		montant = float(data.get('montant'))
+		transfer = Transfer(
+			nom=nom,
+			tel=tel,
+			account=compte,
+			montant=montant
+		)
+		compte.montant_canada += montant
+		compte.save()
+		transfer.save()
+		return Response({'status':'Depot effecue avec succes'},200)
 
-class TransactionVieset(viewsets.ModelViewSet):
+
+
+class TransactionViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
 	queryset = Transaction.objects.all()
 	serializer_class = TransactionSerializer
+	filter_backends = DjangoFilterBackend,
+	filter_fields = {
 
-class DepenseVieset(viewsets.ModelViewSet):
+		"amount":["exact"]
+	}
+	@transaction.atomic
+	def create(self, request): 
+		data = request.data
+		account = Account.objects.get(code='MAIN')
+		receiver = data.get('receiver')
+		amount = float(data.get('amount'))
+		transaction = Transaction(
+			receiver=receiver,
+			sent=account,
+			amount=amount
+		)
+		account.montant_burundi-=amount
+		account.save()
+		transaction.save()
+		return Response({'status':'transaction effecue avec succes'},200)
+
+
+
+
+
+
+class DepenseViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
 	queryset = Depense.objects.all()
 	serializer_class = DepenseSerializer
+	filter_backends = DjangoFilterBackend,
+	filter_fields = {
 
-class PaymentVieset(viewsets.ModelViewSet):
-	authentication_classes = (SessionAuthentication, JWTAuthentication)
-	permission_classes = [IsAuthenticated, ]
-	queryset = Payment.objects.all()
-	serializer_class = PaymentSerializer
+		"date":["exact"]
+	}
 
-class ProvisioningVieset(viewsets.ModelViewSet):
+
+class ProvisioningViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
 	queryset = Provisioning.objects.all()
 	serializer_class = ProvisioningSerializer
+	filter_backends = DjangoFilterBackend,
+	filter_fields = {
+
+		"montant_recu":["exact"]
+	}
+	@transaction.atomic
+	def create(self, request): 
+		data = request.data
+		account = Account.objects.get(code='MAIN')
+		montant_recu = float(data.get('montant_recu'))
+		montant = float(data.get('montant'))
+		approvision =Provisioning(
+			montant_recu=montant_recu,
+			account=account,
+			montant=montant
+		)
+		account.montant_canada -=montant
+		account.montant_burundi += montant_recu
+		account.save()
+		approvision.save()
+		return Response({'status':'approvisionement effecue avec succes'},200)
+

@@ -18,8 +18,8 @@ SECRET_KEY = 'django-insecure-9hi$@hg3(#el%&c!m1&h$bti#yvp+e-nwmu&--g4dc$!jpyo9a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
-CORS_ORIGIN_ALLOW_ALL = True
+#ALLOWED_HOSTS = ['*']
+#CORS_ORIGIN_ALLOW_ALL = True
 
 # Application definition
 
@@ -45,12 +45,13 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'api.middleware.DisableCSRF',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -152,7 +153,9 @@ USE_L10N = True
 
 USE_TZ = True
 
-
+CORS_ORIGIN_WHITELIST = (
+'http://localhost:8081',  # for localhost (REACT Default)
+)
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
