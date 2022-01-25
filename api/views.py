@@ -107,6 +107,36 @@ class TransferViewset(viewsets.ModelViewSet):
 		transfer.save()
 		return Response({'status':'Depot effecue avec succes'},200)
 
+	@transaction.atomic
+	def update(self, request, pk):
+		data = request.data
+		compte = Account.objects.get(code='MAIN')
+		nom = data.get('nom')
+		tel = data.get('tel')
+		montant_fbu =float(data.get('montant_fbu'))
+		taux = float(data.get('taux'))
+		montant = float(data.get('montant'))
+		transfer=self.get_object()
+		compte.montant_canada-=transfer.montant
+		transfer.nom= nom
+		transfer.montant= montant
+		transfer.montant_fbu= montant_fbu
+		transfer.taux= taux
+		transfer.tel= tel
+		compte.montant_canada+=montant
+		compte.save()
+		transfer.save()
+		return Response({'status':'Depot updated avec succes'},200)
+
+	@transaction.atomic
+	def destroy(self,request, pk):
+		transfer=self.get_object()
+		compte = Account.objects.get(code='MAIN')
+		compte.montant_canada -= transfer.montant
+		compte.save()
+		transfer.delete()
+		return Response({'status': 'success'}, 204)
+
 
 
 class TransactionViewset(viewsets.ModelViewSet):
@@ -135,11 +165,6 @@ class TransactionViewset(viewsets.ModelViewSet):
 		transaction.save()
 		return Response({'status':'transaction effecue avec succes'},200)
 
-
-
-
-
-
 class DepenseViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
@@ -150,6 +175,23 @@ class DepenseViewset(viewsets.ModelViewSet):
 
 		"date":["exact"]
 	}
+	@transaction.atomic
+	def create(self, request): 
+		data = request.data
+		account = Account.objects.get(code='MAIN')
+		montant = float(data.get('montant'))
+		is_valid = (data.get('is_valid'))
+		depense =Depense(
+			montant=montant,
+			is_valid=is_valid
+		)
+		if depense.is_valid:
+			account.montant_burundi -= montant
+			account.save()
+			depense.save()
+		return Response({'status':'depasse validee avec succes'},200)
+
+
 
 
 class ProvisioningViewset(viewsets.ModelViewSet):
@@ -177,5 +219,36 @@ class ProvisioningViewset(viewsets.ModelViewSet):
 		account.montant_burundi += montant_recu
 		account.save()
 		approvision.save()
-		return Response({'status':'approvisionement effecue avec succes'},200)
+		serializer = ProvisioningSerializer(approvision, many=False).data
+		return Response(serializer,200)
+
+
+	@transaction.atomic
+	def update(self, request, pk):
+		data = request.data
+		compte = Account.objects.get(code='MAIN')
+		montant_recu =float(data.get('montant_recu'))
+		montant = float(data.get('montant'))
+		approvision=self.get_object()
+		compte.montant_burundi -=approvision.montant_recu
+		compte.montant_canada +=approvision.montant
+		approvision.montant = montant
+		approvision.montant_recu = montant_recu
+		compte.montant_canada -=montant
+		compte.montant_burundi += montant_recu
+		compte.save()
+		approvision.save()
+		serializer = ProvisioningSerializer(approvision, many=False).data
+		return Response(serializer,200)
+
+
+	@transaction.atomic
+	def destroy(self,request, pk):
+		approvision=self.get_object()
+		compte = Account.objects.get(code='MAIN')
+		compte.montant_burundi -= approvision.montant_recu 
+		compte.montant_canada += approvision.montant
+		compte.save()
+		approvision.delete()
+		return Response({'status': 'success'}, 204)
 
