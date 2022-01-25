@@ -25,16 +25,21 @@ class Account(models.Model):
 
 class Transfer(models.Model):
 	id = models.SmallAutoField(primary_key=True)
+	account=models.ForeignKey(Account, on_delete = models.CASCADE)
 	nom = models.CharField(max_length=64, null=True)
 	montant = models.FloatField(default=0)
+	montant_fbu = models.FloatField(default = 0)
 	tel = models.CharField(max_length=20, unique = True)
-	account=models.ForeignKey(Account, on_delete = models.CASCADE)
 	date  = models.DateTimeField(default = timezone.now, editable = False)
-	taux = models.FloatField(default=3500, editable=False)
+	taux = models.FloatField(default=3500)
+	# STATUS
 
 	def __str__(self):
 		return f"{self.nom}"
 	
+	class Meta: # Order post by date
+  		ordering = ['-date',]
+
 
 
 class Transaction(models.Model):
@@ -55,18 +60,11 @@ class Depense(models.Model):
 	account = models.ForeignKey(Account, on_delete=models.CASCADE)
 	montant = models.FloatField(default = 0)
 	date = models.DateTimeField(default=timezone.now, editable = False)
-	is_valid = models.BooleanField(default = False)
+	is_valid = models.BooleanField(default=False)
 
 	def __str__(self):
 		return f"{self.user.username} {self.montant}"
 
-	def save(self, *args, **kwargs):
-		super().save(*args, **kwargs)
-		payee = self.account
-		payee.montant -= self.montant
-		payee.save()
-
-	
 
 class Provisioning(models.Model):
 	id = models.SmallAutoField(primary_key=True)

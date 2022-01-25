@@ -100,6 +100,7 @@ class AccountSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Account
 		fields = "__all__"
+		depth=1
 
 class TransferSerializer(serializers.ModelSerializer):
 	montant_fbu = serializers.SerializerMethodField()
@@ -110,6 +111,7 @@ class TransferSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Transfer
 		fields = "__all__"
+		depth=1
 
 
 class TransactionSerializer(serializers.ModelSerializer):
@@ -117,15 +119,17 @@ class TransactionSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Transaction
 		fields = "__all__"
+		depth=1
 
 
 class DepenseSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Depense
 		fields = "__all__"
+		depth=1
 
 class ProvisioningSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Provisioning
 		fields = "__all__"
-
+		depth=1
