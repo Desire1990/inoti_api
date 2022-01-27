@@ -95,17 +95,26 @@ class TransferViewset(viewsets.ModelViewSet):
 		compte = Account.objects.get(code='MAIN')
 		nom = data.get('nom')
 		tel = data.get('tel')
-		montant = float(data.get('montant'))
+		status = data.get('status')
+		montant = float(data.get('montant'))		
+		montant_fbu = float(data.get('montant_fbu'))		
+		taux = float(data.get('taux'))
 		transfer = Transfer(
 			nom=nom,
 			tel=tel,
 			account=compte,
-			montant=montant
+			montant=montant,
+			montant_fbu=montant_fbu,
+			taux=taux,
+			status=status
 		)
 		compte.montant_canada += montant
+		if transfer.status=='servi':
+			compte.montant_burundi-=montant_fbu
 		compte.save()
 		transfer.save()
-		return Response({'status':'Depot effecue avec succes'},200)
+		serializer = TransferSerializer(transfer, many=False).data
+		return Response(serializer,200)
 
 	@transaction.atomic
 	def update(self, request, pk):
@@ -113,86 +122,38 @@ class TransferViewset(viewsets.ModelViewSet):
 		compte = Account.objects.get(code='MAIN')
 		nom = data.get('nom')
 		tel = data.get('tel')
-		montant_fbu =float(data.get('montant_fbu'))
+		status = data.get('status')
+		montant_fbu = float(data.get('montant_fbu'))
 		taux = float(data.get('taux'))
 		montant = float(data.get('montant'))
 		transfer=self.get_object()
-		compte.montant_canada-=transfer.montant
+		compte.montant_canada -= transfer.montant
+		if transfer.status != 'servi':
+			compte.montant_burundi +=montant_fbu
 		transfer.nom= nom
 		transfer.montant= montant
-		transfer.montant_fbu= montant_fbu
 		transfer.taux= taux
+		transfer.status= status
 		transfer.tel= tel
 		compte.montant_canada+=montant
+		if transfer.status=='servi':
+			compte.montant_burundi -=montant_fbu
 		compte.save()
 		transfer.save()
-		return Response({'status':'Depot updated avec succes'},200)
+		serializer = TransferSerializer(transfer, many=False).data
+		return Response(serializer,200)
 
 	@transaction.atomic
 	def destroy(self,request, pk):
 		transfer=self.get_object()
 		compte = Account.objects.get(code='MAIN')
 		compte.montant_canada -= transfer.montant
+		if transfer.status=='servi':
+			compte.montant_burundi+=transfer.montant_fbu
 		compte.save()
 		transfer.delete()
-		return Response({'status': 'success'}, 204)
-
-
-
-class TransactionViewset(viewsets.ModelViewSet):
-	authentication_classes = (SessionAuthentication, JWTAuthentication)
-	permission_classes = [IsAuthenticated, ]
-	queryset = Transaction.objects.all()
-	serializer_class = TransactionSerializer
-	filter_backends = DjangoFilterBackend,
-	filter_fields = {
-
-		"amount":["exact"]
-	}
-	@transaction.atomic
-	def create(self, request): 
-		data = request.data
-		account = Account.objects.get(code='MAIN')
-		receiver = data.get('receiver')
-		amount = float(data.get('amount'))
-		transaction = Transaction(
-			receiver=receiver,
-			sent=account,
-			amount=amount
-		)
-		account.montant_burundi-=amount
-		account.save()
-		transaction.save()
-		return Response({'status':'transaction effecue avec succes'},200)
-
-class DepenseViewset(viewsets.ModelViewSet):
-	authentication_classes = (SessionAuthentication, JWTAuthentication)
-	permission_classes = [IsAuthenticated, ]
-	queryset = Depense.objects.all()
-	serializer_class = DepenseSerializer
-	filter_backends = DjangoFilterBackend,
-	filter_fields = {
-
-		"date":["exact"]
-	}
-	@transaction.atomic
-	def create(self, request): 
-		data = request.data
-		account = Account.objects.get(code='MAIN')
-		montant = float(data.get('montant'))
-		is_valid = (data.get('is_valid'))
-		depense =Depense(
-			montant=montant,
-			is_valid=is_valid
-		)
-		if depense.is_valid:
-			account.montant_burundi -= montant
-			account.save()
-			depense.save()
-		return Response({'status':'depasse validee avec succes'},200)
-
-
-
+		serializer = TransferSerializer(transfer, many=False).data
+		return Response(serializer,200)
 
 class ProvisioningViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
@@ -249,6 +210,97 @@ class ProvisioningViewset(viewsets.ModelViewSet):
 		compte.montant_burundi -= approvision.montant_recu 
 		compte.montant_canada += approvision.montant
 		compte.save()
-		approvision.delete()
-		return Response({'status': 'success'}, 204)
+		approvision.delete()		
+		serializer = ProvisioningSerializer(approvision, many=False).data
+		return Response(serializer,200)
+
+
+class DepenseViewset(viewsets.ModelViewSet):
+	authentication_classes = (SessionAuthentication, JWTAuthentication)
+	permission_classes = [IsAuthenticated, ]
+	queryset = Depense.objects.all()
+	serializer_class = DepenseSerializer
+	filter_backends = DjangoFilterBackend,
+	filter_fields = {
+
+		"date":["exact"]
+	}
+	@transaction.atomic
+	def create(self, request): 
+		data = request.data
+		account = Account.objects.get(code='MAIN')
+		montant = float(data.get('montant'))
+		motif = (data.get('motif'))
+		depense = Depense(
+			montant=montant,
+			account=account,
+			motif=motif
+		)
+		if depense.is_valid:
+			account.montant_burundi -= montant
+		account.save()
+		depense.save()
+		serializer = DepenseSerializer(depense, many=False).data
+		return Response(serializer,200)
+
+	@transaction.atomic
+	def update(self, request, pk):
+		data = request.data
+		compte = Account.objects.get(code='MAIN')
+		montant = float(data.get('montant'))
+		motif = (data.get('motif'))
+		depense=self.get_object()
+		if depense.is_valid:	
+			compte.montant_burundi -=depense.montant
+			depense.montant = montant
+			depense.motif= motif
+			compte.montant_burundi += montant
+		compte.save()
+		depense.save()
+		serializer = DepenseSerializer(depense, many=False).data
+		return Response(serializer,200)
+
+
+	@transaction.atomic
+	def destroy(self,request, pk):
+		depense=self.get_object()
+		compte = Account.objects.get(code='MAIN')
+		if depense.is_valid:
+			compte.montant_burundi += depense.montant
+		compte.save()
+		depense.delete()		
+		serializer = DepenseSerializer(depense, many=False).data
+		return Response(serializer,200)
+
+
+
+
+
+class TransactionViewset(viewsets.ModelViewSet):
+	authentication_classes = (SessionAuthentication, JWTAuthentication)
+	permission_classes = [IsAuthenticated, ]
+	queryset = Transaction.objects.all()
+	serializer_class = TransactionSerializer
+	filter_backends = DjangoFilterBackend,
+	filter_fields = {
+
+		"amount":["exact"]
+	}
+	@transaction.atomic
+	def create(self, request):
+		user = request.user
+		data = request.data
+		user = User.objects.get(user=user.id)
+		account = Account.objects.get(code='MAIN')
+		receiver = data.get('receiver')
+		amount = float(data.get('amount'))
+		transaction = Transaction(
+			receiver=receiver,
+			sent=account,
+			amount=amount
+		)
+		account.montant_burundi-=amount
+		account.save()
+		transaction.save()
+		return Response({'status':'transaction effecue avec succes'},200)
 
