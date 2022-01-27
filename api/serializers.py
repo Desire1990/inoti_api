@@ -5,6 +5,7 @@ from .models import *
 from django.contrib.auth.models import User
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
+from django.db.models import Sum
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -76,7 +77,7 @@ class UserSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = User
 		exclude = "last_login","is_staff","date_joined","user_permissions"
-
+		depth=1
 
 class LastLoginSerializer(serializers.ModelSerializer):
 	class Meta:
@@ -110,7 +111,7 @@ class TransferSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = Transfer
-		fields = "__all__"
+		fields = ("__all__")
 		depth=1
 
 
@@ -123,6 +124,7 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 
 class DepenseSerializer(serializers.ModelSerializer):
+	user = serializers.HiddenField(default=serializers.CurrentUserDefault())
 	class Meta:
 		model = Depense
 		fields = "__all__"
