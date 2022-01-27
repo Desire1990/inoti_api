@@ -1,10 +1,14 @@
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User, Group
-from django.db.models import Sum
-from datetime import datetime, timedelta, date
-from django.core.validators import MaxValueValidator, MinValueValidator
+from datetime import datetime
 
+
+STATUS=(
+	('default', 'default'),
+	('appel', 'appel'),
+	('servi', 'servi')
+)
 class LastLogin(models.Model):
 	id = models.SmallAutoField(primary_key=True)
 	date = models.DateTimeField(default=timezone.now, editable=False)
@@ -31,8 +35,8 @@ class Transfer(models.Model):
 	montant_fbu = models.FloatField(default = 0)
 	tel = models.CharField(max_length=20, unique = True)
 	date  = models.DateTimeField(default = timezone.now, editable = False)
-	taux = models.FloatField(default=3500)
-	# STATUS
+	taux = models.FloatField(default=3500, null=True)
+	status = models.CharField(max_length=20, choices=STATUS)
 
 	def __str__(self):
 		return f"{self.nom}"
@@ -53,24 +57,22 @@ class Transaction(models.Model):
 		return f"{self.amount}"
 
 
-
-class Depense(models.Model):
-	id = models.SmallAutoField(primary_key=True)
-	user = models.ForeignKey(User, on_delete=models.CASCADE)
-	account = models.ForeignKey(Account, on_delete=models.CASCADE)
-	montant = models.FloatField(default = 0)
-	date = models.DateTimeField(default=timezone.now, editable = False)
-	is_valid = models.BooleanField(default=False)
-
-	def __str__(self):
-		return f"{self.user.username} {self.montant}"
-
-
 class Provisioning(models.Model):
 	id = models.SmallAutoField(primary_key=True)
 	account  = models.ForeignKey(Account, on_delete = models.PROTECT)
 	montant = models.FloatField(default=0)
 	montant_recu = models.FloatField(default=0)
 	date = models.DateTimeField(default=timezone.now, editable = False)
+	def __str__(self):
+		return f"{self.user.username} {self.montant}"
+
+class Depense(models.Model):
+	id = models.SmallAutoField(primary_key=True)
+	account  = models.ForeignKey(Account, on_delete = models.PROTECT)
+	montant = models.FloatField(default = 0)
+	date = models.DateTimeField(default=timezone.now, editable = False)
+	is_valid = models.BooleanField(default=False)
+	motif = models.TextField()
+
 	def __str__(self):
 		return f"{self.user.username} {self.montant}"
