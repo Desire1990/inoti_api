@@ -11,7 +11,7 @@ from django.db import transaction
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from django.http import JsonResponse
 from django_filters import rest_framework as filters
 
 
@@ -79,6 +79,7 @@ class AccountViewset(viewsets.ModelViewSet):
 		"date":["exact"]
 	}
 
+
 class TransferViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
@@ -95,22 +96,17 @@ class TransferViewset(viewsets.ModelViewSet):
 		compte = Account.objects.get(code='MAIN')
 		nom = data.get('nom')
 		tel = data.get('tel')
-		status = data.get('status')
 		montant = float(data.get('montant'))		
-		montant_fbu = float(data.get('montant_fbu'))		
-		taux = float(data.get('taux'))
+		# montant_fbu = float(data.get('montant_fbu'))		
 		transfer = Transfer(
 			nom=nom,
 			tel=tel,
 			account=compte,
 			montant=montant,
-			montant_fbu=montant_fbu,
-			taux=taux,
-			status=status
+			# status=status,
+			# montant_fbu=montant_fbu,
 		)
-		compte.montant_canada += montant
-		if transfer.status=='servi':
-			compte.montant_burundi-=montant_fbu
+		compte.montant_canada+=transfer.montant
 		compte.save()
 		transfer.save()
 		serializer = TransferSerializer(transfer, many=False).data
@@ -123,33 +119,41 @@ class TransferViewset(viewsets.ModelViewSet):
 		nom = data.get('nom')
 		tel = data.get('tel')
 		status = data.get('status')
-		montant_fbu = float(data.get('montant_fbu'))
-		taux = float(data.get('taux'))
+		# montant_fbu = float(data.get('montant_fbu'))
 		montant = float(data.get('montant'))
 		transfer=self.get_object()
 		compte.montant_canada -= transfer.montant
-		if transfer.status != 'servi':
-			compte.montant_burundi +=montant_fbu
 		transfer.nom= nom
 		transfer.montant= montant
-		transfer.taux= taux
-		transfer.status= status
 		transfer.tel= tel
+		transfer.status= status
 		compte.montant_canada+=montant
-		if transfer.status=='servi':
-			compte.montant_burundi -=montant_fbu
 		compte.save()
 		transfer.save()
 		serializer = TransferSerializer(transfer, many=False).data
 		return Response(serializer,200)
 
 	@transaction.atomic
+	def partial_update(self, request, *args, **kwargs):
+		data = request.data
+		compte = Account.objects.get(code='MAIN')
+		transfer=self.get_object()
+		print(request.data)
+		if (request.data['is_valid'] =='servi'):
+			transfer.counter+=1
+			compte.montant_burundi-=transfer.montant*transfer.taux
+			compte.save()
+		serializer = TransferSerializer(transfer, data=request.data, partial=True) # set partial=True to update a data partially
+		if serializer.is_valid():
+			serializer.save()
+			return JsonResponse(status=201, data=serializer.data)
+		return JsonResponse(status=400, data="wrong parameters")
+
+	@transaction.atomic
 	def destroy(self,request, pk):
 		transfer=self.get_object()
 		compte = Account.objects.get(code='MAIN')
 		compte.montant_canada -= transfer.montant
-		if transfer.status=='servi':
-			compte.montant_burundi+=transfer.montant_fbu
 		compte.save()
 		transfer.delete()
 		serializer = TransferSerializer(transfer, many=False).data
@@ -234,10 +238,8 @@ class DepenseViewset(viewsets.ModelViewSet):
 		depense = Depense(
 			montant=montant,
 			account=account,
-			motif=motif
+			motif=motif,
 		)
-		if depense.is_valid:
-			account.montant_burundi -= montant
 		account.save()
 		depense.save()
 		serializer = DepenseSerializer(depense, many=False).data
@@ -247,60 +249,36 @@ class DepenseViewset(viewsets.ModelViewSet):
 	def update(self, request, pk):
 		data = request.data
 		compte = Account.objects.get(code='MAIN')
-		montant = float(data.get('montant'))
-		motif = (data.get('motif'))
 		depense=self.get_object()
-		if depense.is_valid:	
-			compte.montant_burundi -=depense.montant
-			depense.montant = montant
-			depense.motif= motif
-			compte.montant_burundi += montant
+		validate = (data.get('validate'))
 		compte.save()
 		depense.save()
 		serializer = DepenseSerializer(depense, many=False).data
 		return Response(serializer,200)
 
+	@transaction.atomic
+	def partial_update(self, request, *args, **kwargs):
+		data = request.data
+		compte = Account.objects.get(code='MAIN')
+		# montant = float(data.get('montant'))
+		depense=self.get_object()
+		print(request.data)
+		serializer = DepenseSerializer(depense, data=request.data, partial=True) # set partial=True to update a data partially
+		if (request.data['validate'] =='Validé'):
+			compte.montant_burundi-=depense.montant
+			compte.save()
+		if serializer.is_valid():
+			serializer.save()
+			return JsonResponse(status=201, data=serializer.data)
+		return JsonResponse(status=400, data="wrong parameters")
 
 	@transaction.atomic
 	def destroy(self,request, pk):
 		depense=self.get_object()
 		compte = Account.objects.get(code='MAIN')
-		if depense.is_valid:
-			compte.montant_burundi += depense.montant
 		compte.save()
 		depense.delete()		
 		serializer = DepenseSerializer(depense, many=False).data
 		return Response(serializer,200)
 
-
-
-
-
-class TransactionViewset(viewsets.ModelViewSet):
-	authentication_classes = (SessionAuthentication, JWTAuthentication)
-	permission_classes = [IsAuthenticated, ]
-	queryset = Transaction.objects.all()
-	serializer_class = TransactionSerializer
-	filter_backends = DjangoFilterBackend,
-	filter_fields = {
-
-		"amount":["exact"]
-	}
-	@transaction.atomic
-	def create(self, request):
-		user = request.user
-		data = request.data
-		user = User.objects.get(user=user.id)
-		account = Account.objects.get(code='MAIN')
-		receiver = data.get('receiver')
-		amount = float(data.get('amount'))
-		transaction = Transaction(
-			receiver=receiver,
-			sent=account,
-			amount=amount
-		)
-		account.montant_burundi-=amount
-		account.save()
-		transaction.save()
-		return Response({'status':'transaction effecue avec succes'},200)
 
