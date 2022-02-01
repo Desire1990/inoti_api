@@ -115,14 +115,6 @@ class TransferSerializer(serializers.ModelSerializer):
 		depth=1
 
 
-class TransactionSerializer(serializers.ModelSerializer):
-
-	class Meta:
-		model = Transaction
-		fields = "__all__"
-		depth=1
-
-
 class DepenseSerializer(serializers.ModelSerializer):
 	user = serializers.HiddenField(default=serializers.CurrentUserDefault())
 	class Meta:
