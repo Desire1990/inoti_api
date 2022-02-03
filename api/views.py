@@ -78,7 +78,15 @@ class AccountViewset(viewsets.ModelViewSet):
 	filter_fields = {
 		"date":["exact"]
 	}
-
+class TauxViewset(viewsets.ModelViewSet):
+	authentication_classes = (SessionAuthentication, JWTAuthentication)
+	permission_classes = [IsAuthenticated, ]
+	queryset = Taux.objects.all()
+	serializer_class = TauxSerializer
+	filter_backends = DjangoFilterBackend,
+	filter_fields = {
+		"date":["exact"]
+	}
 
 class TransferViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
@@ -94,6 +102,7 @@ class TransferViewset(viewsets.ModelViewSet):
 	def create(self, request):
 		data = request.data
 		compte = Account.objects.get(code='MAIN')
+		taux = Taux.objects.all().latest('id')
 		nom = data.get('nom')
 		tel = data.get('tel')
 		montant = float(data.get('montant'))		
@@ -101,6 +110,7 @@ class TransferViewset(viewsets.ModelViewSet):
 		transfer = Transfer(
 			nom=nom,
 			tel=tel,
+			taux=taux,
 			account=compte,
 			montant=montant,
 			# status=status,
@@ -116,8 +126,11 @@ class TransferViewset(viewsets.ModelViewSet):
 	def update(self, request, pk):
 		data = request.data
 		compte = Account.objects.get(code='MAIN')
+		taux = Taux.objects.get(code='MAIN')
+		taux = Taux.objects.all().latest('id')
 		nom = data.get('nom')
 		tel = data.get('tel')
+		# taux = float(data.get('taux'))
 		status = data.get('status')
 		# montant_fbu = float(data.get('montant_fbu'))
 		montant = float(data.get('montant'))
@@ -126,6 +139,7 @@ class TransferViewset(viewsets.ModelViewSet):
 		transfer.nom= nom
 		transfer.montant= montant
 		transfer.tel= tel
+		# transfer.taux= taux
 		transfer.status= status
 		compte.montant_canada+=montant
 		compte.save()
@@ -141,7 +155,10 @@ class TransferViewset(viewsets.ModelViewSet):
 		print(request.data)
 		if (request.data['is_valid'] =='servi'):
 			transfer.counter+=1
-			compte.montant_burundi-=transfer.montant*transfer.taux
+			if transfer.counter==1:
+				compte.montant_burundi-=transfer.montant*transfer.taux.taux
+			else:
+				pass
 			compte.save()
 		serializer = TransferSerializer(transfer, data=request.data, partial=True) # set partial=True to update a data partially
 		if serializer.is_valid():

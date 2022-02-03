@@ -105,9 +105,9 @@ class AccountSerializer(serializers.ModelSerializer):
 
 class TransferSerializer(serializers.ModelSerializer):
 	montant_fbu = serializers.SerializerMethodField()
-	
+
 	def get_montant_fbu(self, instance):
-		return instance.montant*instance.taux
+		return float(instance.montant)*float(instance.taux.taux)
 
 	class Meta:
 		model = Transfer
@@ -125,5 +125,11 @@ class DepenseSerializer(serializers.ModelSerializer):
 class ProvisioningSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Provisioning
+		fields = "__all__"
+		depth=1
+
+class TauxSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = Taux
 		fields = "__all__"
 		depth=1

@@ -30,23 +30,31 @@ class Account(models.Model):
 		return f"{self.montant_canada}"
 
 
+class Taux(models.Model):
+	id = models.SmallAutoField(primary_key=True)
+	taux = models.FloatField(default=3500)
+	date  = models.DateTimeField(default = timezone.now, editable = False)
+
+	def __str__(self):
+		return self.taux
 
 class Transfer(models.Model):
 	id = models.SmallAutoField(primary_key=True)
-	account=models.ForeignKey(Account, on_delete = models.CASCADE)
+	account=models.ForeignKey(Account, on_delete = models.PROTECT)
+	taux = models.ForeignKey(Taux, on_delete=models.PROTECT)
 	nom = models.CharField(max_length=64, null=True)
 	montant = models.FloatField(default=0)
 	montant_fbu = models.FloatField(default = 0)
-	tel =  models.CharField(max_length=12, validators=[RegexValidator(regex=r'^\+?257?\d{9,15}$', message="Phone number must be entered in the format '+123456789'. Up to 15 digits allowed.")])
+	tel =  models.CharField(max_length=12, unique=True, validators=[RegexValidator(regex=r'^\+?257?\d{9,15}$', message="Phone number must be entered in the format '+123456789'. Up to 15 digits allowed.")])
 	date  = models.DateTimeField(default = timezone.now, editable = False)
-	taux = models.FloatField(default=3500, null=True)
+	# taux = models.FloatField(default=3500, null=True)
 	is_valid = models.CharField(max_length=20,default='defaut', choices=STATUS)
 	counter = models.PositiveIntegerField(default=0)
 
 	def __str__(self):
 		return f"{self.nom}"
 	
-	class Meta: # Order post by date
+	class Meta: # Order by date
   		ordering = ['-date',]
 
 
