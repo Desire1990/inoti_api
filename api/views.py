@@ -126,20 +126,16 @@ class TransferViewset(viewsets.ModelViewSet):
 	def update(self, request, pk):
 		data = request.data
 		compte = Account.objects.get(code='MAIN')
-		taux = Taux.objects.get(code='MAIN')
 		taux = Taux.objects.all().latest('id')
 		nom = data.get('nom')
 		tel = data.get('tel')
-		# taux = float(data.get('taux'))
 		status = data.get('status')
-		# montant_fbu = float(data.get('montant_fbu'))
 		montant = float(data.get('montant'))
 		transfer=self.get_object()
 		compte.montant_canada -= transfer.montant
 		transfer.nom= nom
 		transfer.montant= montant
 		transfer.tel= tel
-		# transfer.taux= taux
 		transfer.status= status
 		compte.montant_canada+=montant
 		compte.save()
@@ -282,7 +278,12 @@ class DepenseViewset(viewsets.ModelViewSet):
 		print(request.data)
 		serializer = DepenseSerializer(depense, data=request.data, partial=True) # set partial=True to update a data partially
 		if (request.data['validate'] =='Validé'):
-			compte.montant_burundi-=depense.montant
+			depense.counter+=1
+			if depense.counter==1:
+				compte.montant_burundi-=depense.montant
+			else:
+				pass
+			compte.save()
 			compte.save()
 		if serializer.is_valid():
 			serializer.save()

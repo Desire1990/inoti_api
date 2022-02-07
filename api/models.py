@@ -74,6 +74,7 @@ class Depense(models.Model):
 	date = models.DateTimeField(default=timezone.now, editable = False)
 	validate = models.CharField(default='Attente', max_length=20, choices=VALID)
 	motif = models.TextField()
+	counter = models.PositiveIntegerField(default=0)
 
 	def __str__(self):
 		return f"{self.montant}"
