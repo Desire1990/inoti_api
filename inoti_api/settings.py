@@ -4,6 +4,8 @@ from datetime import timedelta
 
 from pathlib import Path
 
+import mimetypes
+mimetypes.add_type("text/css", ".css", True)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -18,8 +20,8 @@ SECRET_KEY = 'django-insecure-9hi$@hg3(#el%&c!m1&h$bti#yvp+e-nwmu&--g4dc$!jpyo9a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# ALLOWED_HOSTS = ['*']
-# CORS_ORIGIN_ALLOW_ALL = True
+ALLOWED_HOSTS = ['*']
+CORS_ORIGIN_ALLOW_ALL = True
 
 # Application definition
 
@@ -74,7 +76,9 @@ ROOT_URLCONF = 'inoti_api.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            os.path.join(BASE_DIR, "templates"),
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -153,10 +157,11 @@ USE_L10N = True
 
 USE_TZ = True
 
-CORS_ORIGIN_WHITELIST = (
-'http://localhost:8081',  # for localhost (REACT Default)
-)
-# Static files (CSS, JavaScript, Images)
+# CORS_ORIGIN_WHITELIST = (
+# # 'http://localhost:8081',
+# 'http://10.10.57.100:8081' , # for localhost (REACT Default)
+# )
+# # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATICFILES_DIRS = [
