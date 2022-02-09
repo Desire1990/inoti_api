@@ -66,8 +66,6 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     ],
-    'DEFAULT_PAGINATION_CLASS':'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
 }
 
 
@@ -157,10 +155,9 @@ USE_L10N = True
 
 USE_TZ = True
 
-# CORS_ORIGIN_WHITELIST = (
-# # 'http://localhost:8081',
-# 'http://10.10.57.100:8081' , # for localhost (REACT Default)
-# )
+CORS_ORIGIN_WHITELIST = (
+'http://localhost:8081', # for localhost (REACT Default)
+)
 # # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
