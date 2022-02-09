@@ -28,6 +28,9 @@ class Account(models.Model):
 
 	def __str__(self):
 		return f"{self.montant_canada}"
+	class Meta: # Order by date
+  		ordering = ['-date',]
+
 
 
 class Taux(models.Model):
@@ -36,7 +39,10 @@ class Taux(models.Model):
 	date  = models.DateTimeField(default = timezone.now, editable = False)
 
 	def __str__(self):
-		return self.taux
+		return f"{self.taux}"
+	class Meta: # Order by date
+  		ordering = ['-date',]
+
 
 class Transfer(models.Model):
 	id = models.SmallAutoField(primary_key=True)
@@ -66,6 +72,10 @@ class Provisioning(models.Model):
 	date = models.DateTimeField(default=timezone.now, editable = False)
 	def __str__(self):
 		return f"{self.user.username} {self.montant}"
+		
+	class Meta: # Order by date
+  		ordering = ['-date',]
+
 
 class Depense(models.Model):
 	id = models.SmallAutoField(primary_key=True)
@@ -78,3 +88,6 @@ class Depense(models.Model):
 
 	def __str__(self):
 		return f"{self.montant}"
+	class Meta: # Order by date
+  		ordering = ['-date',]
+
