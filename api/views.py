@@ -13,10 +13,15 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.http import JsonResponse
 from django_filters import rest_framework as filters
+from rest_framework.pagination import PageNumberPagination
 
 
 from .models import *
 from .serializers import *
+
+class LeadPagination(PageNumberPagination):
+    page_size = 10
+
 
 class TokenPairView(TokenObtainPairView):
 	serializer_class = TokenPairSerializer
@@ -25,6 +30,7 @@ class UserViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, IsAdminUser]
 	queryset = User.objects.filter()
+	pagination_class = LeadPagination
 	serializer_class = UserSerializer
 	filter_backends = DjangoFilterBackend,
 	filter_fields = {
@@ -73,6 +79,7 @@ class AccountViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
 	queryset = Account.objects.all()
+	pagination_class = LeadPagination
 	serializer_class = AccountSerializer
 	filter_backends = DjangoFilterBackend,
 	filter_fields = {
@@ -82,6 +89,7 @@ class TauxViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
 	queryset = Taux.objects.all()
+	pagination_class = LeadPagination
 	serializer_class = TauxSerializer
 	filter_backends = DjangoFilterBackend,
 	filter_fields = {
@@ -92,6 +100,7 @@ class TransferViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
 	queryset = Transfer.objects.all()
+	pagination_class = LeadPagination
 	serializer_class = TransferSerializer
 	filter_backends = DjangoFilterBackend,
 	filter_fields = {
@@ -101,7 +110,7 @@ class TransferViewset(viewsets.ModelViewSet):
 	@transaction.atomic
 	def create(self, request):
 		data = request.data
-		compte = Account.objects.get(code='MAIN')
+		compte = Account.objects.all().latest('id')
 		taux = Taux.objects.all().latest('id')
 		nom = data.get('nom')
 		tel = data.get('tel')
@@ -125,7 +134,7 @@ class TransferViewset(viewsets.ModelViewSet):
 	@transaction.atomic
 	def update(self, request, pk):
 		data = request.data
-		compte = Account.objects.get(code='MAIN')
+		Account.objects.all().latest('id')
 		taux = Taux.objects.all().latest('id')
 		nom = data.get('nom')
 		tel = data.get('tel')
@@ -146,7 +155,7 @@ class TransferViewset(viewsets.ModelViewSet):
 	@transaction.atomic
 	def partial_update(self, request, *args, **kwargs):
 		data = request.data
-		compte = Account.objects.get(code='MAIN')
+		compte=Account.objects.all().latest('id')
 		transfer=self.get_object()
 		print(request.data)
 		if (request.data['is_valid'] =='servi'):
@@ -165,7 +174,7 @@ class TransferViewset(viewsets.ModelViewSet):
 	@transaction.atomic
 	def destroy(self,request, pk):
 		transfer=self.get_object()
-		compte = Account.objects.get(code='MAIN')
+		compte=Account.objects.all().latest('id')
 		compte.montant_canada -= transfer.montant
 		compte.save()
 		transfer.delete()
@@ -175,6 +184,7 @@ class TransferViewset(viewsets.ModelViewSet):
 class ProvisioningViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
+	pagination_class = LeadPagination
 	queryset = Provisioning.objects.all()
 	serializer_class = ProvisioningSerializer
 	filter_backends = DjangoFilterBackend,
@@ -204,7 +214,7 @@ class ProvisioningViewset(viewsets.ModelViewSet):
 	@transaction.atomic
 	def update(self, request, pk):
 		data = request.data
-		compte = Account.objects.get(code='MAIN')
+		compte=Account.objects.all().latest('id')
 		montant_recu =float(data.get('montant_recu'))
 		montant = float(data.get('montant'))
 		approvision=self.get_object()
@@ -223,7 +233,7 @@ class ProvisioningViewset(viewsets.ModelViewSet):
 	@transaction.atomic
 	def destroy(self,request, pk):
 		approvision=self.get_object()
-		compte = Account.objects.get(code='MAIN')
+		compte=Account.objects.all().latest('id')
 		compte.montant_burundi -= approvision.montant_recu 
 		compte.montant_canada += approvision.montant
 		compte.save()
@@ -236,6 +246,7 @@ class DepenseViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
 	queryset = Depense.objects.all()
+	pagination_class = LeadPagination
 	serializer_class = DepenseSerializer
 	filter_backends = DjangoFilterBackend,
 	filter_fields = {
@@ -245,7 +256,7 @@ class DepenseViewset(viewsets.ModelViewSet):
 	@transaction.atomic
 	def create(self, request): 
 		data = request.data
-		account = Account.objects.get(code='MAIN')
+		account = Account.objects.all().latest()
 		montant = float(data.get('montant'))
 		motif = (data.get('motif'))
 		depense = Depense(
@@ -261,7 +272,7 @@ class DepenseViewset(viewsets.ModelViewSet):
 	@transaction.atomic
 	def update(self, request, pk):
 		data = request.data
-		compte = Account.objects.get(code='MAIN')
+		compte=Account.objects.all().latest('id')
 		depense=self.get_object()
 		validate = (data.get('validate'))
 		compte.save()
@@ -272,7 +283,7 @@ class DepenseViewset(viewsets.ModelViewSet):
 	@transaction.atomic
 	def partial_update(self, request, *args, **kwargs):
 		data = request.data
-		compte = Account.objects.get(code='MAIN')
+		compte = Account.objects.all().latest()
 		# montant = float(data.get('montant'))
 		depense=self.get_object()
 		print(request.data)
@@ -293,7 +304,7 @@ class DepenseViewset(viewsets.ModelViewSet):
 	@transaction.atomic
 	def destroy(self,request, pk):
 		depense=self.get_object()
-		compte = Account.objects.get(code='MAIN')
+		compte=Account.objects.all().latest('id')
 		compte.save()
 		depense.delete()		
 		serializer = DepenseSerializer(depense, many=False).data
