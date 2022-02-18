@@ -49,7 +49,7 @@ class UserViewset(viewsets.ModelViewSet):
 			last_name = data.get("last_name")
 		)
 		user.set_password("password")
-		
+
 		user.save()
 		serializer = UserSerializer(user, many=False)
 		return Response(serializer.data, 201)
@@ -114,8 +114,8 @@ class TransferViewset(viewsets.ModelViewSet):
 		taux = Taux.objects.all().latest('id')
 		nom = data.get('nom')
 		tel = data.get('tel')
-		montant = float(data.get('montant'))		
-		# montant_fbu = float(data.get('montant_fbu'))		
+		montant = float(data.get('montant'))
+		# montant_fbu = float(data.get('montant_fbu'))
 		transfer = Transfer(
 			nom=nom,
 			tel=tel,
@@ -134,7 +134,7 @@ class TransferViewset(viewsets.ModelViewSet):
 	@transaction.atomic
 	def update(self, request, pk):
 		data = request.data
-		Account.objects.all().latest('id')
+		compte=Account.objects.all().latest('id')
 		taux = Taux.objects.all().latest('id')
 		nom = data.get('nom')
 		tel = data.get('tel')
@@ -193,9 +193,9 @@ class ProvisioningViewset(viewsets.ModelViewSet):
 		"montant_recu":["exact"]
 	}
 	@transaction.atomic
-	def create(self, request): 
+	def create(self, request):
 		data = request.data
-		account = Account.objects.get(code='MAIN')
+		account = Account.objects.all().latest('id')
 		montant_recu = float(data.get('montant_recu'))
 		montant = float(data.get('montant'))
 		approvision =Provisioning(
@@ -203,8 +203,8 @@ class ProvisioningViewset(viewsets.ModelViewSet):
 			account=account,
 			montant=montant
 		)
-		account.montant_canada -=montant
-		account.montant_burundi += montant_recu
+		# account.montant_canada -=montant
+		# account.montant_burundi += montant_recu
 		account.save()
 		approvision.save()
 		serializer = ProvisioningSerializer(approvision, many=False).data
@@ -218,26 +218,43 @@ class ProvisioningViewset(viewsets.ModelViewSet):
 		montant_recu =float(data.get('montant_recu'))
 		montant = float(data.get('montant'))
 		approvision=self.get_object()
-		compte.montant_burundi -=approvision.montant_recu
-		compte.montant_canada +=approvision.montant
+		# compte.montant_burundi -=approvision.montant_recu
+		# compte.montant_canada +=approvision.montant
 		approvision.montant = montant
 		approvision.montant_recu = montant_recu
-		compte.montant_canada -=montant
-		compte.montant_burundi += montant_recu
+		# compte.montant_canada -=montant
+		# compte.montant_burundi += montant_recu
 		compte.save()
 		approvision.save()
 		serializer = ProvisioningSerializer(approvision, many=False).data
 		return Response(serializer,200)
 
+	@transaction.atomic
+	def partial_update(self, request, *args, **kwargs):
+		data = request.data
+		compte=Account.objects.all().latest('id')
+		approvision=self.get_object()
+		print(request.data)
+		if (request.data['validate'] =='Validé'):
+			approvision.counter+=1
+			if approvision.counter==1:
+				compte.montant_burundi+=approvision.montant_recu
+				compte.montant_canada-=approvision.montant
+			compte.save()
+		serializer = ProvisioningSerializer(approvision, data=request.data, partial=True) # set partial=True to update a data partially
+		if serializer.is_valid():
+			serializer.save()
+			return JsonResponse(status=201, data=serializer.data)
+		return JsonResponse(status=400, data="wrong parameters")
 
 	@transaction.atomic
 	def destroy(self,request, pk):
 		approvision=self.get_object()
 		compte=Account.objects.all().latest('id')
-		compte.montant_burundi -= approvision.montant_recu 
+		compte.montant_burundi -= approvision.montant_recu
 		compte.montant_canada += approvision.montant
 		compte.save()
-		approvision.delete()		
+		approvision.delete()
 		serializer = ProvisioningSerializer(approvision, many=False).data
 		return Response(serializer,200)
 
@@ -250,13 +267,12 @@ class DepenseViewset(viewsets.ModelViewSet):
 	serializer_class = DepenseSerializer
 	filter_backends = DjangoFilterBackend,
 	filter_fields = {
-
 		"date":["exact"]
 	}
 	@transaction.atomic
-	def create(self, request): 
+	def create(self, request):
 		data = request.data
-		account = Account.objects.all().latest()
+		account = Account.objects.all().latest('id')
 		montant = float(data.get('montant'))
 		motif = (data.get('motif'))
 		depense = Depense(
@@ -283,7 +299,7 @@ class DepenseViewset(viewsets.ModelViewSet):
 	@transaction.atomic
 	def partial_update(self, request, *args, **kwargs):
 		data = request.data
-		compte = Account.objects.all().latest()
+		compte = Account.objects.all().latest('id')
 		# montant = float(data.get('montant'))
 		depense=self.get_object()
 		print(request.data)
@@ -295,7 +311,6 @@ class DepenseViewset(viewsets.ModelViewSet):
 			else:
 				pass
 			compte.save()
-			compte.save()
 		if serializer.is_valid():
 			serializer.save()
 			return JsonResponse(status=201, data=serializer.data)
@@ -306,8 +321,6 @@ class DepenseViewset(viewsets.ModelViewSet):
 		depense=self.get_object()
 		compte=Account.objects.all().latest('id')
 		compte.save()
-		depense.delete()		
+		depense.delete()
 		serializer = DepenseSerializer(depense, many=False).data
 		return Response(serializer,200)
-
-
