@@ -59,7 +59,7 @@ class Transfer(models.Model):
 
 	def __str__(self):
 		return f"{self.nom}"
-	
+
 	class Meta: # Order by date
   		ordering = ['-date',]
 
@@ -70,11 +70,14 @@ class Provisioning(models.Model):
 	montant = models.FloatField(default=0)
 	montant_recu = models.FloatField(default=0)
 	date = models.DateTimeField(default=timezone.now, editable = False)
+	# is_valid = models.BooleanField(default=False, editable=False)
+	counter = models.PositiveIntegerField(default=0)
+	validate = models.CharField(default='Attente', max_length=20, choices=VALID)
 	def __str__(self):
 		return f"{self.user.username} {self.montant}"
-		
+
 	class Meta: # Order by date
-  		ordering = ['-date',]
+  		ordering = ['date',]
 
 
 class Depense(models.Model):
@@ -90,4 +93,3 @@ class Depense(models.Model):
 		return f"{self.montant}"
 	class Meta: # Order by date
   		ordering = ['-date',]
-
