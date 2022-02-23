@@ -14,13 +14,24 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.http import JsonResponse
 from django_filters import rest_framework as filters
 from rest_framework.pagination import PageNumberPagination
-
+# third party
+from collections import OrderedDict
+from rest_framework import viewsets, filters
 
 from .models import *
 from .serializers import *
 
 class LeadPagination(PageNumberPagination):
-    page_size = 10
+	page_size = 10
+	def get_paginated_response(self, data):
+		return Response(OrderedDict([
+			('next', self.get_next_link()),
+			('previous', self.get_previous_link()),
+			('count', self.page.paginator.count),
+			('page', self.page.number),
+			('num_page', self.page.paginator.num_pages),
+			('results', data)
+		]))
 
 
 class TokenPairView(TokenObtainPairView):
@@ -102,11 +113,9 @@ class TransferViewset(viewsets.ModelViewSet):
 	queryset = Transfer.objects.all()
 	pagination_class = LeadPagination
 	serializer_class = TransferSerializer
-	filter_backends = DjangoFilterBackend,
-	filter_fields = {
+	filter_backends = (filters.SearchFilter,)
+	search_fields = ('nom', 'montant', 'tel')
 
-		"account":["exact"]
-	}
 	@transaction.atomic
 	def create(self, request):
 		data = request.data
@@ -265,9 +274,11 @@ class DepenseViewset(viewsets.ModelViewSet):
 	queryset = Depense.objects.all()
 	pagination_class = LeadPagination
 	serializer_class = DepenseSerializer
+
 	filter_backends = DjangoFilterBackend,
 	filter_fields = {
-		"date":["exact"]
+
+		"montant":["exact"]
 	}
 	@transaction.atomic
 	def create(self, request):
