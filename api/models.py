@@ -38,8 +38,8 @@ class Taux(models.Model):
 
 	def __str__(self):
 		return f"{self.taux}"
-	class Meta: # Order by date
-  		ordering = ['-date',]
+	# class Meta: # Order by date
+ #  		ordering = ['-date',]
 
 class Transfer(models.Model):
 	id = models.SmallAutoField(primary_key=True)

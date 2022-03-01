@@ -21,7 +21,7 @@ from rest_framework import viewsets, filters
 from .models import *
 from .serializers import *
 
-class LeadPagination(PageNumberPagination):
+class Pagination(PageNumberPagination):
 	page_size = 10
 	def get_paginated_response(self, data):
 		return Response(OrderedDict([
@@ -41,7 +41,7 @@ class UserViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, IsAdminUser]
 	queryset = User.objects.filter()
-	pagination_class = LeadPagination
+	pagination_class = Pagination
 	serializer_class = UserSerializer
 	filter_backends = DjangoFilterBackend,
 	filter_fields = {
@@ -90,7 +90,7 @@ class AccountViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
 	queryset = Account.objects.all()
-	pagination_class = LeadPagination
+	pagination_class = Pagination
 	serializer_class = AccountSerializer
 	filter_backends = DjangoFilterBackend,
 	filter_fields = {
@@ -100,7 +100,7 @@ class TauxViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
 	queryset = Taux.objects.all()
-	pagination_class = LeadPagination
+	pagination_class = Pagination
 	serializer_class = TauxSerializer
 	filter_backends = DjangoFilterBackend,
 	filter_fields = {
@@ -111,7 +111,7 @@ class TransferViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
 	queryset = Transfer.objects.all()
-	pagination_class = LeadPagination
+	pagination_class = Pagination
 	serializer_class = TransferSerializer
 	filter_backends = (filters.SearchFilter,)
 	search_fields = ('nom', 'montant', 'tel')
@@ -192,7 +192,7 @@ class TransferViewset(viewsets.ModelViewSet):
 class ProvisioningViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
-	pagination_class = LeadPagination
+	pagination_class = Pagination
 	queryset = Provisioning.objects.all()
 	serializer_class = ProvisioningSerializer
 	filter_backends = DjangoFilterBackend,
@@ -270,7 +270,7 @@ class DepenseViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
 	queryset = Depense.objects.all()
-	pagination_class = LeadPagination
+	pagination_class = Pagination
 	serializer_class = DepenseSerializer
 
 	filter_backends = DjangoFilterBackend,
