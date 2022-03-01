@@ -166,7 +166,6 @@ class TransferViewset(viewsets.ModelViewSet):
 		data = request.data
 		compte=Account.objects.all().latest('id')
 		transfer=self.get_object()
-		print(request.data)
 		if (request.data['is_valid'] =='servi'):
 			transfer.counter+=1
 			if transfer.counter==1:
@@ -243,7 +242,6 @@ class ProvisioningViewset(viewsets.ModelViewSet):
 		data = request.data
 		compte=Account.objects.all().latest('id')
 		approvision=self.get_object()
-		print(request.data)
 		if (request.data['validate'] =='Validé'):
 			approvision.counter+=1
 			if approvision.counter==1:
@@ -313,7 +311,6 @@ class DepenseViewset(viewsets.ModelViewSet):
 		compte = Account.objects.all().latest('id')
 		# montant = float(data.get('montant'))
 		depense=self.get_object()
-		print(request.data)
 		serializer = DepenseSerializer(depense, data=request.data, partial=True) # set partial=True to update a data partially
 		if (request.data['validate'] =='Validé'):
 			depense.counter+=1
