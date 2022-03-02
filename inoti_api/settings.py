@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework',
     'rest_framework.authtoken',
-    'rest_framework_swagger', # for test
+    # 'rest_framework_swagger', # for test
     'api',
     'django.contrib.sites',
     'allauth.account',
@@ -160,7 +160,7 @@ USE_L10N = True
 USE_TZ = True
 
 CORS_ORIGIN_WHITELIST = (
-'http://localhost:8081', # for localhost (REACT Default)
+'http://localhost:8080', # for localhost (REACT Default)
 )
 # # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
