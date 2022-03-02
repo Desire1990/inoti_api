@@ -105,9 +105,18 @@ class AccountSerializer(serializers.ModelSerializer):
 
 class TransferSerializer(serializers.ModelSerializer):
 	montant_fbu = serializers.SerializerMethodField()
+	tel = serializers.RegexField(regex=r'^((\+)257|)?[6-7][1-2, 7-9]\d{6}$',       
+		required=True)
+
+	def validate_tel(self, phone):
+		data['tel'] = self.tel
+		if (not(tel.length==8 or tel.length==12)):
+			raise serializers.ValidationError("Please enter a valid number.")
+		return phone
 
 	def get_montant_fbu(self, instance):
 		return float(instance.montant)*float(instance.taux.taux)
+
 
 	class Meta:
 		model = Transfer

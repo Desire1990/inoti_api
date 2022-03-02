@@ -122,7 +122,7 @@ class TransferViewset(viewsets.ModelViewSet):
 		compte = Account.objects.all().latest('id')
 		taux = Taux.objects.all().latest('id')
 		nom = data.get('nom')
-		tel = data.get('tel')
+		tel = int(data.get('tel'))
 		montant = float(data.get('montant'))
 		# montant_fbu = float(data.get('montant_fbu'))
 		transfer = Transfer(
@@ -256,11 +256,13 @@ class ProvisioningViewset(viewsets.ModelViewSet):
 
 	@transaction.atomic
 	def destroy(self,request, pk):
+		data=request.data
 		approvision=self.get_object()
 		compte=Account.objects.all().latest('id')
-		compte.montant_burundi -= approvision.montant_recu
-		compte.montant_canada += approvision.montant
-		compte.save()
+		if (approvision.validate =='Validé'):
+			compte.montant_burundi -= approvision.montant_recu
+			compte.montant_canada += approvision.montant
+			compte.save()
 		approvision.delete()
 		serializer = ProvisioningSerializer(approvision, many=False).data
 		return Response(serializer,200)
@@ -272,10 +274,8 @@ class DepenseViewset(viewsets.ModelViewSet):
 	queryset = Depense.objects.all()
 	pagination_class = Pagination
 	serializer_class = DepenseSerializer
-
 	filter_backends = DjangoFilterBackend,
 	filter_fields = {
-
 		"montant":["exact"]
 	}
 	@transaction.atomic
