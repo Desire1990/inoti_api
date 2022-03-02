@@ -14,13 +14,24 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.http import JsonResponse
 from django_filters import rest_framework as filters
 from rest_framework.pagination import PageNumberPagination
-
+# third party
+from collections import OrderedDict
+from rest_framework import viewsets, filters
 
 from .models import *
 from .serializers import *
 
-class LeadPagination(PageNumberPagination):
-    page_size = 10
+class Pagination(PageNumberPagination):
+	page_size = 10
+	def get_paginated_response(self, data):
+		return Response(OrderedDict([
+			('next', self.get_next_link()),
+			('previous', self.get_previous_link()),
+			('count', self.page.paginator.count),
+			('page', self.page.number),
+			('num_page', self.page.paginator.num_pages),
+			('results', data)
+		]))
 
 
 class TokenPairView(TokenObtainPairView):
@@ -30,7 +41,7 @@ class UserViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, IsAdminUser]
 	queryset = User.objects.filter()
-	pagination_class = LeadPagination
+	pagination_class = Pagination
 	serializer_class = UserSerializer
 	filter_backends = DjangoFilterBackend,
 	filter_fields = {
@@ -79,7 +90,7 @@ class AccountViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
 	queryset = Account.objects.all()
-	pagination_class = LeadPagination
+	pagination_class = Pagination
 	serializer_class = AccountSerializer
 	filter_backends = DjangoFilterBackend,
 	filter_fields = {
@@ -89,7 +100,7 @@ class TauxViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
 	queryset = Taux.objects.all()
-	pagination_class = LeadPagination
+	pagination_class = Pagination
 	serializer_class = TauxSerializer
 	filter_backends = DjangoFilterBackend,
 	filter_fields = {
@@ -100,20 +111,18 @@ class TransferViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
 	queryset = Transfer.objects.all()
-	pagination_class = LeadPagination
+	pagination_class = Pagination
 	serializer_class = TransferSerializer
-	filter_backends = DjangoFilterBackend,
-	filter_fields = {
+	filter_backends = (filters.SearchFilter,)
+	search_fields = ('nom', 'montant', 'tel')
 
-		"account":["exact"]
-	}
 	@transaction.atomic
 	def create(self, request):
 		data = request.data
 		compte = Account.objects.all().latest('id')
 		taux = Taux.objects.all().latest('id')
 		nom = data.get('nom')
-		tel = data.get('tel')
+		tel = int(data.get('tel'))
 		montant = float(data.get('montant'))
 		# montant_fbu = float(data.get('montant_fbu'))
 		transfer = Transfer(
@@ -157,7 +166,6 @@ class TransferViewset(viewsets.ModelViewSet):
 		data = request.data
 		compte=Account.objects.all().latest('id')
 		transfer=self.get_object()
-		print(request.data)
 		if (request.data['is_valid'] =='servi'):
 			transfer.counter+=1
 			if transfer.counter==1:
@@ -184,7 +192,7 @@ class TransferViewset(viewsets.ModelViewSet):
 class ProvisioningViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
-	pagination_class = LeadPagination
+	pagination_class = Pagination
 	queryset = Provisioning.objects.all()
 	serializer_class = ProvisioningSerializer
 	filter_backends = DjangoFilterBackend,
@@ -234,7 +242,6 @@ class ProvisioningViewset(viewsets.ModelViewSet):
 		data = request.data
 		compte=Account.objects.all().latest('id')
 		approvision=self.get_object()
-		print(request.data)
 		if (request.data['validate'] =='Validé'):
 			approvision.counter+=1
 			if approvision.counter==1:
@@ -249,11 +256,13 @@ class ProvisioningViewset(viewsets.ModelViewSet):
 
 	@transaction.atomic
 	def destroy(self,request, pk):
+		data=request.data
 		approvision=self.get_object()
 		compte=Account.objects.all().latest('id')
-		compte.montant_burundi -= approvision.montant_recu
-		compte.montant_canada += approvision.montant
-		compte.save()
+		if (approvision.validate =='Validé'):
+			compte.montant_burundi -= approvision.montant_recu
+			compte.montant_canada += approvision.montant
+			compte.save()
 		approvision.delete()
 		serializer = ProvisioningSerializer(approvision, many=False).data
 		return Response(serializer,200)
@@ -263,11 +272,11 @@ class DepenseViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
 	permission_classes = [IsAuthenticated, ]
 	queryset = Depense.objects.all()
-	pagination_class = LeadPagination
+	pagination_class = Pagination
 	serializer_class = DepenseSerializer
 	filter_backends = DjangoFilterBackend,
 	filter_fields = {
-		"date":["exact"]
+		"montant":["exact"]
 	}
 	@transaction.atomic
 	def create(self, request):
@@ -302,7 +311,6 @@ class DepenseViewset(viewsets.ModelViewSet):
 		compte = Account.objects.all().latest('id')
 		# montant = float(data.get('montant'))
 		depense=self.get_object()
-		print(request.data)
 		serializer = DepenseSerializer(depense, data=request.data, partial=True) # set partial=True to update a data partially
 		if (request.data['validate'] =='Validé'):
 			depense.counter+=1
