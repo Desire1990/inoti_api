@@ -4,7 +4,5 @@ from . import views
 
 urlpatterns = [
     path('api/', include('api.urls')),
-    re_path("^.*$", views.index),    
-    # path('admin/', admin.site.urls),
-    # path('api-auth/', include('rest_framework.urls')),
+    re_path("^.*$", views.index)
 ]

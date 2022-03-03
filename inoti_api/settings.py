@@ -5,9 +5,6 @@ from datetime import timedelta
 
 from pathlib import Path
 
-import mimetypes
-mimetypes.add_type("text/css", ".css", True)
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -22,8 +19,6 @@ SECRET_KEY = 'django-insecure-9hi$@hg3(#el%&c!m1&h$bti#yvp+e-nwmu&--g4dc$!jpyo9a
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-CORS_ORIGIN_ALLOW_ALL = True
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -38,7 +33,6 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework',
     'rest_framework.authtoken',
-    # 'rest_framework_swagger', # for test
     'api',
     'django.contrib.sites',
     'allauth.account',
@@ -49,18 +43,16 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'api.middleware.DisableCSRF',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
+    'corsheaders.middleware.CorsMiddleware',
 ]
-
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -156,9 +148,9 @@ USE_L10N = True
 
 USE_TZ = True
 
-CORS_ORIGIN_WHITELIST = (
-'http://localhost:8080', # for localhost (REACT Default)
-)
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8080",
+]
 # # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
