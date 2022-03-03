@@ -122,7 +122,7 @@ class TransferViewset(viewsets.ModelViewSet):
 		compte = Account.objects.all().latest('id')
 		taux = Taux.objects.all().latest('id')
 		nom = data.get('nom')
-		tel = int(data.get('tel'))
+		tel = (data.get('tel'))
 		montant = float(data.get('montant'))
 		# montant_fbu = float(data.get('montant_fbu'))
 		transfer = Transfer(
@@ -184,6 +184,7 @@ class TransferViewset(viewsets.ModelViewSet):
 		transfer=self.get_object()
 		compte=Account.objects.all().latest('id')
 		compte.montant_canada -= transfer.montant
+		compte.montant_burundi += transfer.montant*transfer.taux.taux
 		compte.save()
 		transfer.delete()
 		serializer = TransferSerializer(transfer, many=False).data

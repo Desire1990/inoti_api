@@ -46,8 +46,8 @@ class Taux(models.Model):
 
 class Transfer(models.Model):
 	id = models.SmallAutoField(primary_key=True)
-	account=models.ForeignKey(Account, on_delete = models.PROTECT)
-	taux = models.ForeignKey(Taux, on_delete=models.PROTECT)
+	account=models.ForeignKey(Account, on_delete = models.CASCADE)
+	taux = models.ForeignKey(Taux, on_delete=models.CASCADE)
 	nom = models.CharField(max_length=64, null=True)
 	montant = models.FloatField(default=0)
 	montant_fbu = models.FloatField(default = 0)
@@ -65,7 +65,7 @@ class Transfer(models.Model):
 
 class Provisioning(models.Model):
 	id = models.SmallAutoField(primary_key=True)
-	account  = models.ForeignKey(Account, on_delete = models.PROTECT)
+	account  = models.ForeignKey(Account, on_delete = models.CASCADE)
 	montant = models.FloatField(default=0)
 	montant_recu = models.FloatField(default=0)
 	date = models.DateTimeField(default=timezone.now, editable = False)
@@ -79,7 +79,7 @@ class Provisioning(models.Model):
 
 class Depense(models.Model):
 	id = models.SmallAutoField(primary_key=True)
-	account  = models.ForeignKey(Account, on_delete = models.PROTECT)
+	account  = models.ForeignKey(Account, on_delete = models.CASCADE)
 	montant = models.FloatField(default = 0)
 	date = models.DateTimeField(default=timezone.now, editable = False)
 	validate = models.CharField(default='Attente', max_length=20, choices=VALID)
