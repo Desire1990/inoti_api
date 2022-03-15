@@ -114,7 +114,7 @@ class TransferViewset(viewsets.ModelViewSet):
 	pagination_class = Pagination
 	serializer_class = TransferSerializer
 	filter_backends = (filters.SearchFilter,)
-	search_fields = ('nom', 'montant', 'tel')
+	search_fields = ('nom', 'montant', 'tel', 'date')
 
 	@transaction.atomic
 	def create(self, request):
@@ -196,11 +196,9 @@ class ProvisioningViewset(viewsets.ModelViewSet):
 	pagination_class = Pagination
 	queryset = Provisioning.objects.all()
 	serializer_class = ProvisioningSerializer
-	filter_backends = DjangoFilterBackend,
-	filter_fields = {
+	filter_backends = (filters.SearchFilter,)
+	search_fields = ('montant_recu', 'date')
 
-		"montant_recu":["exact"]
-	}
 	@transaction.atomic
 	def create(self, request):
 		data = request.data
@@ -275,10 +273,9 @@ class DepenseViewset(viewsets.ModelViewSet):
 	queryset = Depense.objects.all()
 	pagination_class = Pagination
 	serializer_class = DepenseSerializer
-	filter_backends = DjangoFilterBackend,
-	filter_fields = {
-		"montant":["exact"]
-	}
+	filter_backends = (filters.SearchFilter,)
+	search_fields = ('montant','date')
+
 	@transaction.atomic
 	def create(self, request):
 		data = request.data
