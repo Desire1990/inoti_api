@@ -20,6 +20,7 @@ from rest_framework import viewsets, filters
 
 from .models import *
 from .serializers import *
+from rest_framework.viewsets import GenericViewSet
 
 class Pagination(PageNumberPagination):
 	page_size = 10
@@ -102,10 +103,9 @@ class TauxViewset(viewsets.ModelViewSet):
 	queryset = Taux.objects.all()
 	pagination_class = Pagination
 	serializer_class = TauxSerializer
-	filter_backends = DjangoFilterBackend,
-	filter_fields = {
-		"date":["exact"]
-	}
+	filter_backends = (filters.SearchFilter,)
+	search_fields = ('taux', 'date')
+
 
 class TransferViewset(viewsets.ModelViewSet):
 	authentication_classes = (SessionAuthentication, JWTAuthentication)
@@ -330,3 +330,50 @@ class DepenseViewset(viewsets.ModelViewSet):
 		depense.delete()
 		serializer = DepenseSerializer(depense, many=False).data
 		return Response(serializer,200)
+
+
+
+class StatViewset(viewsets.GenericViewSet):
+	authentication_classes = (SessionAuthentication, JWTAuthentication)
+	permission_classes = [IsAuthenticated, ]
+	pagination_class = Pagination
+	queryset = Depense.objects.all()
+	filter_backends = (filters.SearchFilter,)
+	search_fields = ('montant','date')
+
+	def list(self,request):
+		depenses = Depense.objects.all()
+		approvisions = Provisioning.objects.all()
+		transfers = Transfer.objects.all()
+
+		result=[]
+		for transfer in transfers:
+			if transfer.is_valid=='servi':
+				result.append({
+					'date':transfer.date,
+					'activite': "Transfer",
+					'libelle' : 'Chez '+transfer.nom,
+					'montant' : transfer.montant*transfer.taux.taux
+
+					})
+		for depense in depenses:
+			if depense.validate=='Validé':
+				result.append({
+					'date':depense.date,
+					'activite': 'Depense',
+					'libelle' : depense.motif,
+					'montant' : depense.montant
+
+					})
+		for approvision in approvisions:
+			if approvision.validate=='Validé':
+				result.append({
+					'date':approvision.date,
+					'activite': "Approvision",
+					'libelle' : approvision.montant,
+					'montant' : approvision.montant_recu
+
+					})
+		serializer=StatSerializer(result, many=True)
+
+		return Response(serializer.data, 200)

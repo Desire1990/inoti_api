@@ -12,6 +12,7 @@ router.register("compte",AccountViewset)
 router.register("depot",TransferViewset)
 router.register("depense",DepenseViewset)
 router.register("approvision",ProvisioningViewset)
+router.register("stat",StatViewset)
 
 app_name='api'
 
