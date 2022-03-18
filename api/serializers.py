@@ -125,7 +125,6 @@ class TransferSerializer(serializers.ModelSerializer):
 
 
 class DepenseSerializer(serializers.ModelSerializer):
-	user = serializers.HiddenField(default=serializers.CurrentUserDefault())
 	class Meta:
 		model = Depense
 		fields = "__all__"
@@ -142,3 +141,11 @@ class TauxSerializer(serializers.ModelSerializer):
 		model = Taux
 		fields = "__all__"
 		depth=1
+
+class StatSerializer(serializers.Serializer):
+	date = serializers.DateTimeField()
+	activite = serializers.CharField(max_length=200)
+	libelle = serializers.CharField(max_length=200)
+	montant = serializers.CharField(max_length=200)
+
+
