@@ -72,7 +72,7 @@ class Provisioning(models.Model):
 	counter = models.PositiveIntegerField(default=0)
 	validate = models.CharField(default='Attente', max_length=20, choices=VALID)
 	def __str__(self):
-		return f"{self.user.username} {self.montant}"
+		return f"{self.montant}"
 
 	class Meta: # Order by date
   		ordering = ['date',]
